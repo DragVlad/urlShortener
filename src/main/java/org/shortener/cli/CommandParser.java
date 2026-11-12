@@ -26,4 +26,8 @@ public class CommandParser {
         System.arraycopy(tokens, 1, arguments, 0, arguments.length);
         return arguments;
     }
+
+    public boolean hasArguments(String[] arguments, int expectedCount) {
+        return arguments != null && arguments.length >= expectedCount;
+    }
 }
