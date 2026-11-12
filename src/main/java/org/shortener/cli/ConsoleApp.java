@@ -22,24 +22,27 @@ public class ConsoleApp {
             String[] arguments = commandParser.parseArguments(inputLine);
             handleCommand(command, arguments);
         }
+        System.out.println("Работа завершена.");
+        scanner.close();
     }
 
     private void handleCommand(Command command, String[] arguments) {
         switch (command) {
             case HELP -> printHelp();
             case EXIT -> running = false;
+            case UNKNOWN -> System.out.println("Неизвестная команда. Введите help для списка команд.");
             default -> System.out.println("Команда пока не реализована.");
         }
     }
 
     private void printHelp() {
         System.out.println("Доступные команды:");
-        System.out.println("  create <url> [limit] - сократить ссылку");
-        System.out.println("  open <code>          - открыть короткую ссылку");
-        System.out.println("  edit_imit <code> <limit> - изменить лимит переходов");
-        System.out.println("  delete <code>        - удалить ссылку");
-        System.out.println("  list                 - список ваших ссылок");
-        System.out.println("  help                 - показать эту справку");
-        System.out.println("  exit                 - выход");
+        System.out.println("  create <url> [limit]      - сократить ссылку");
+        System.out.println("  open <code>               - открыть короткую ссылку");
+        System.out.println("  edit_limit <code> <limit> - изменить лимит переходов");
+        System.out.println("  delete <code>             - удалить ссылку");
+        System.out.println("  list                      - список ваших ссылок");
+        System.out.println("  help                      - показать эту справку");
+        System.out.println("  exit                      - выход");
     }
 }
