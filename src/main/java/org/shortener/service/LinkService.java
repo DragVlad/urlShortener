@@ -21,28 +21,31 @@ public class LinkService {
     private final ShortCodeGenerator codeGenerator;
     private final UrlValidator urlValidator;
     private final AppConfig appConfig;
+    private final NotificationService notificationService;
 
     public LinkService(ShortLinkDao shortLinkDao,
                        UserDao userDao,
                        ShortCodeGenerator codeGenerator,
                        UrlValidator urlValidator,
-                       AppConfig appConfig) {
+                       AppConfig appConfig,
+                       NotificationService notificationService) {
         this.shortLinkDao = shortLinkDao;
         this.userDao = userDao;
         this.codeGenerator = codeGenerator;
         this.urlValidator = urlValidator;
         this.appConfig = appConfig;
+        this.notificationService = notificationService;
     }
 
     public Optional<ShortLink> createLink(UUID ownerId, String originalUrl, int requestedLimit) {
         if (!urlValidator.isValid(originalUrl)) {
-            System.out.println("Ошибка: неверный URL.");
+            notificationService.notifyError("неверный URL.");
             return Optional.empty();
         }
 
         Optional<User> owner = userDao.findById(ownerId);
         if (owner.isEmpty()) {
-            System.out.println("Ошибка: пользователь не найден.");
+            notificationService.notifyError("пользователь не найден.");
             return Optional.empty();
         }
 
@@ -71,7 +74,7 @@ public class LinkService {
     public Optional<String> openLink(String shortCode) {
         Optional<ShortLink> linkOptional = shortLinkDao.findByCode(shortCode);
         if (linkOptional.isEmpty()) {
-            System.out.println("Ссылка не найдена.");
+            notificationService.notifyError("ссылка не найдена.");
             return Optional.empty();
         }
 
@@ -81,24 +84,24 @@ public class LinkService {
         if (shortLink.isExpired(now)) {
             shortLink.setStatus(LinkStatus.EXPIRED);
             shortLinkDao.save(shortLink);
-            System.out.println("Ссылка недоступна: истек срок жизни.");
+            notificationService.notifyExpired(shortLink);
             return Optional.empty();
         }
 
         if (shortLink.getStatus() == LinkStatus.DELETED) {
-            System.out.println("Ссылка удалена.");
+            notificationService.notifyError("ссылка удалена.");
             return Optional.empty();
         }
 
         if (shortLink.isLimitReached()) {
-            System.out.println("Ссылка недоступна: исчерпан лимит переходов.");
+            notificationService.notifyLimitReached(shortLink);
             return Optional.empty();
         }
 
         shortLink.incrementVisitCount();
         if (shortLink.isLimitReached()) {
             shortLink.setStatus(LinkStatus.LIMIT_REACHED);
-            System.out.println("Внимание: это был последний доступ по ссылке. Лимит исчерпан.");
+            notificationService.notifyLimitReached(shortLink);
         }
         shortLinkDao.save(shortLink);
 
@@ -108,29 +111,29 @@ public class LinkService {
     public boolean editLimit(UUID ownerId, String shortCode, int newLimit) {
         Optional<ShortLink> linkOptional = shortLinkDao.findByCode(shortCode);
         if (linkOptional.isEmpty()) {
-            System.out.println("Ссылка не найдена.");
+            notificationService.notifyError("ссылка не найдена.");
             return false;
         }
 
         ShortLink shortLink = linkOptional.get();
 
         if (!shortLink.isOwnedBy(ownerId)) {
-            System.out.println("Отказано: вы не владелец этой ссылки.");
+            notificationService.notifyAccessDenied("вы не владелец этой ссылки.");
             return false;
         }
 
         if (newLimit <= 0) {
-            System.out.println("Ошибка: лимит должен быть больше нуля.");
+            notificationService.notifyError("лимит должен быть больше нуля.");
             return false;
         }
 
         if (newLimit > appConfig.getMaxVisitLimit()) {
-            System.out.println("Ошибка: лимит превышает максимум (" + appConfig.getMaxVisitLimit() + ").");
+            notificationService.notifyError("лимит превышает максимум (" + appConfig.getMaxVisitLimit() + ").");
             return false;
         }
 
         if (newLimit < shortLink.getVisitCount()) {
-            System.out.println("Ошибка: лимит не может быть меньше текущего количества переходов (" + shortLink.getVisitCount() + ").");
+            notificationService.notifyError("лимит не может быть меньше текущего количества переходов (" + shortLink.getVisitCount() + ").");
             return false;
         }
 
@@ -139,21 +142,21 @@ public class LinkService {
             shortLink.setStatus(LinkStatus.ACTIVE);
         }
         shortLinkDao.save(shortLink);
-        System.out.println("Лимит обновлён: " + newLimit);
+        notificationService.notifyInfo("Лимит обновлён: " + newLimit);
         return true;
     }
 
     public boolean deleteLink(UUID ownerId, String shortCode) {
         Optional<ShortLink> linkOptional = shortLinkDao.findByCode(shortCode);
         if (linkOptional.isEmpty()) {
-            System.out.println("Ссылка не найдена.");
+            notificationService.notifyError("ссылка не найдена.");
             return false;
         }
 
         ShortLink shortLink = linkOptional.get();
 
         if (!shortLink.isOwnedBy(ownerId)) {
-            System.out.println("Отказано: вы не владелец этой ссылки.");
+            notificationService.notifyAccessDenied("вы не владелец этой ссылки.");
             return false;
         }
 
@@ -166,7 +169,7 @@ public class LinkService {
             userDao.save(user);
         });
 
-        System.out.println("Ссылка удалена.");
+        notificationService.notifyInfo("Ссылка удалена.");
         return true;
     }
 
@@ -174,7 +177,7 @@ public class LinkService {
         List<ShortLink> expiredLinks = shortLinkDao.deleteExpired(Instant.now());
         for (ShortLink shortLink : expiredLinks) {
             shortLink.setStatus(LinkStatus.EXPIRED);
-            System.out.println("Уведомление: ссылка " + shortLink.getCode() + " удалена по истечении срока жизни.");
+            notificationService.notifyExpired(shortLink);
 
             Optional<User> owner = userDao.findById(shortLink.getOwnerId());
             owner.ifPresent(user -> {
@@ -182,5 +185,9 @@ public class LinkService {
                 userDao.save(user);
             });
         }
+    }
+
+    public List<ShortLink> findLinksByOwner(UUID ownerId) {
+        return shortLinkDao.findByOwnerId(ownerId);
     }
 }
