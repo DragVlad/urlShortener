@@ -41,11 +41,9 @@ class ShortCodeGeneratorTest {
     void skipsAlreadyExistingCodes() {
         Set<String> taken = new HashSet<>();
         ShortCodeGenerator generator = new ShortCodeGenerator(taken::contains, 6);
-        // Захватываем первый сгенерированный код и делаем его "занятым"
         String first = generator.generateUniqueCode();
         taken.add(first);
 
-        // Все последующие не должны совпадать с занятым
         for (int i = 0; i < 50; i++) {
             String next = generator.generateUniqueCode();
             assertNotEquals(first, next);
