@@ -44,26 +44,21 @@ class UrlShortenerIntegrationTest {
 
     @Test
     void fullFlowCreateOpenEditDelete() {
-        // 1. Создаём пользователя
         User user = userService.getOrCreateUser(null);
         assertNotNull(user.getId());
 
-        // 2. Создаём ссылку
         ShortLink created = linkService.createLink(user.getId(),
                 "https://example.com/very/long/path", 3).orElseThrow();
         assertNotNull(created.getCode());
 
-        // 3. Открываем — счётчик растёт
         Optional<String> url = linkService.openLink(created.getCode());
         assertTrue(url.isPresent());
         assertEquals("https://example.com/very/long/path", url.get());
         assertEquals(1, shortLinkDao.findByCode(created.getCode()).orElseThrow().getVisitCount());
 
-        // 4. Меняем лимит
         assertTrue(linkService.editLimit(user.getId(), created.getCode(), 10));
         assertEquals(10, shortLinkDao.findByCode(created.getCode()).orElseThrow().getVisitLimit());
 
-        // 5. Удаляем
         assertTrue(linkService.deleteLink(user.getId(), created.getCode()));
         assertEquals(LinkStatus.DELETED,
                 shortLinkDao.findByCode(created.getCode()).orElseThrow().getStatus());
@@ -79,11 +74,9 @@ class UrlShortenerIntegrationTest {
         ShortLink link = linkService.createLink(u1.getId(), "https://a.example", 5)
                 .orElseThrow();
 
-        // u2 не может редактировать/удалять ссылку u1
         assertFalse(linkService.editLimit(u2.getId(), link.getCode(), 20));
         assertFalse(linkService.deleteLink(u2.getId(), link.getCode()));
 
-        // u1 всё ещё владеет и может удалить
         assertTrue(linkService.deleteLink(u1.getId(), link.getCode()));
     }
 
