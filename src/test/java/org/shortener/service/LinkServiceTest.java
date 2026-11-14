@@ -43,8 +43,6 @@ class LinkServiceTest {
         userDao.save(new User(ownerId));
     }
 
-    // ---------- createLink ----------
-
     @Test
     void createLinkReturnsLinkAndSavesIt() {
         Optional<ShortLink> result = linkService.createLink(ownerId,
@@ -94,8 +92,6 @@ class LinkServiceTest {
         assertTrue(owner.getLinkCodes().contains(link.getCode()));
     }
 
-    // ---------- openLink ----------
-
     @Test
     void openLinkReturnsOriginalUrlAndIncrementsCount() {
         ShortLink link = linkService.createLink(ownerId, "https://example.com", 5)
@@ -143,8 +139,6 @@ class LinkServiceTest {
 
         assertTrue(linkService.openLink(link.getCode()).isEmpty());
     }
-
-    // ---------- editLimit ----------
 
     @Test
     void editLimitUpdatesLimitForOwner() {
@@ -198,7 +192,7 @@ class LinkServiceTest {
     void editLimitRestoresActiveStatusFromLimitReached() {
         ShortLink link = linkService.createLink(ownerId, "https://example.com", 1)
                 .orElseThrow();
-        linkService.openLink(link.getCode()); // limit reached
+        linkService.openLink(link.getCode());
 
         assertEquals(LinkStatus.LIMIT_REACHED,
                 shortLinkDao.findByCode(link.getCode()).orElseThrow().getStatus());
@@ -207,8 +201,6 @@ class LinkServiceTest {
         assertEquals(LinkStatus.ACTIVE,
                 shortLinkDao.findByCode(link.getCode()).orElseThrow().getStatus());
     }
-
-    // ---------- deleteLink ----------
 
     @Test
     void deleteLinkMarksDeletedAndRemovesFromOwner() {
@@ -236,8 +228,6 @@ class LinkServiceTest {
         assertFalse(linkService.deleteLink(ownerId, "nope"));
     }
 
-    // ---------- cleanupExpiredLinks ----------
-
     @Test
     void cleanupExpiredLinksRemovesExpiredOnesAndFromOwner() {
         ShortLink active = linkService.createLink(ownerId, "https://a.example", 5)
@@ -254,8 +244,6 @@ class LinkServiceTest {
         assertFalse(userDao.findById(ownerId).orElseThrow()
                 .getLinkCodes().contains("exp"));
     }
-
-    // ---------- findLinksByOwner ----------
 
     @Test
     void findLinksByOwnerReturnsOnlyOwnedLinks() {
