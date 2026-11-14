@@ -1,0 +1,12 @@
+logs
+Dockerfile
+reports
+.gauge
+README.md
+gauge_bin
+.gitignore
+target/
+.git/
+.idea/
+*.iml
+README.md
