@@ -24,11 +24,11 @@ public class LinkService {
     private final NotificationService notificationService;
 
     public LinkService(ShortLinkDao shortLinkDao,
-                       UserDao userDao,
-                       ShortCodeGenerator codeGenerator,
-                       UrlValidator urlValidator,
-                       AppConfig appConfig,
-                       NotificationService notificationService) {
+            UserDao userDao,
+            ShortCodeGenerator codeGenerator,
+            UrlValidator urlValidator,
+            AppConfig appConfig,
+            NotificationService notificationService) {
         this.shortLinkDao = shortLinkDao;
         this.userDao = userDao;
         this.codeGenerator = codeGenerator;
@@ -133,7 +133,8 @@ public class LinkService {
         }
 
         if (newLimit < shortLink.getVisitCount()) {
-            notificationService.notifyError("лимит не может быть меньше текущего количества переходов (" + shortLink.getVisitCount() + ").");
+            notificationService.notifyError(
+                    "лимит не может быть меньше текущего количества переходов (" + shortLink.getVisitCount() + ").");
             return false;
         }
 

@@ -15,11 +15,11 @@ public class ShortLink {
     private LinkStatus status;
 
     public ShortLink(String code,
-                     String originalUrl,
-                     UUID ownerId,
-                     int visitLimit,
-                     Instant createdAt,
-                     Instant expiresAt) {
+            String originalUrl,
+            UUID ownerId,
+            int visitLimit,
+            Instant createdAt,
+            Instant expiresAt) {
         this.code = code;
         this.originalUrl = originalUrl;
         this.ownerId = ownerId;

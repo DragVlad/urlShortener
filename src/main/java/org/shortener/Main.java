@@ -21,16 +21,19 @@ public class Main {
         UserDao userDao = new InMemoryUserDao();
         ShortLinkDao shortLinkDao = new InMemoryShortLinkDao();
 
-        ShortCodeGenerator codeGenerator = new ShortCodeGenerator(shortLinkDao::existsByCode, appConfig.getCodeLength());
+        ShortCodeGenerator codeGenerator = new ShortCodeGenerator(shortLinkDao::existsByCode,
+                appConfig.getCodeLength());
         UrlValidator urlValidator = new UrlValidator();
         BrowserOpener browserOpener = new BrowserOpener();
         NotificationService notificationService = new NotificationService();
 
         UserService userService = new UserService(userDao);
-        LinkService linkService = new LinkService(shortLinkDao, userDao, codeGenerator, urlValidator, appConfig, notificationService);
+        LinkService linkService = new LinkService(shortLinkDao, userDao, codeGenerator, urlValidator, appConfig,
+                notificationService);
         CommandParser commandParser = new CommandParser();
 
-        ConsoleApp consoleApp = new ConsoleApp(commandParser, linkService, userService, notificationService, browserOpener, appConfig);
+        ConsoleApp consoleApp = new ConsoleApp(commandParser, linkService, userService, notificationService,
+                browserOpener, appConfig);
         consoleApp.start();
     }
 }

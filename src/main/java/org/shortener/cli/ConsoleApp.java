@@ -26,11 +26,11 @@ public class ConsoleApp {
     private boolean running = true;
 
     public ConsoleApp(CommandParser commandParser,
-                      LinkService linkService,
-                      UserService userService,
-                      NotificationService notificationService,
-                      BrowserOpener browserOpener,
-                      AppConfig appConfig) {
+            LinkService linkService,
+            UserService userService,
+            NotificationService notificationService,
+            BrowserOpener browserOpener,
+            AppConfig appConfig) {
         this.commandParser = commandParser;
         this.linkService = linkService;
         this.userService = userService;
@@ -108,7 +108,8 @@ public class ConsoleApp {
     }
 
     private void handleEditLimit(String[] arguments) {
-        if (!checkUserExists()) return;
+        if (!checkUserExists())
+            return;
 
         if (!commandParser.hasArguments(arguments, 2)) {
             notificationService.notifyError("использование: edit_limit <code> <limit>");
@@ -128,7 +129,8 @@ public class ConsoleApp {
     }
 
     private void handleDelete(String[] arguments) {
-        if (!checkUserExists()) return;
+        if (!checkUserExists())
+            return;
 
         if (!commandParser.hasArguments(arguments, 1)) {
             notificationService.notifyError("использование: delete <code>");
@@ -140,7 +142,8 @@ public class ConsoleApp {
     }
 
     private void handleList() {
-        if (!checkUserExists()) return;
+        if (!checkUserExists())
+            return;
 
         List<ShortLink> ownedLinks = linkService.findLinksByOwner(currentUserId);
         if (ownedLinks.isEmpty()) {

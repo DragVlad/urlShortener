@@ -12,7 +12,8 @@ public class AppConfig {
     private final int codeLength;
     private final String linkBaseUrl; // <--- НОВОЕ ПОЛЕ
 
-    private AppConfig(long linkTtlSeconds, int defaultVisitLimit, int maxVisitLimit, int codeLength, String linkBaseUrl) {
+    private AppConfig(long linkTtlSeconds, int defaultVisitLimit, int maxVisitLimit, int codeLength,
+            String linkBaseUrl) {
         this.linkTtlSeconds = linkTtlSeconds;
         this.defaultVisitLimit = defaultVisitLimit;
         this.maxVisitLimit = maxVisitLimit;

@@ -22,12 +22,10 @@ public class ShortCodeGenerator {
         while (true) {
             long randomNumber = Math.abs(random.nextLong());
             String code = encodeToBase62(randomNumber, codeLength);
-            
+
             if (!codeExistsChecker.test(code)) {
                 return code;
             }
-            // Если код занят, пробуем следующий по порядку (randomNumber + 1, + 2 и т.д.)
-            // Это гарантирует, что мы найдем свободный код, а не будем бесконечно тыкаться в занятые
             long offset = 1;
             while (true) {
                 code = encodeToBase62(randomNumber + offset, codeLength);
@@ -42,15 +40,13 @@ public class ShortCodeGenerator {
     private String encodeToBase62(long value, int length) {
         StringBuilder builder = new StringBuilder(length);
         long currentValue = value;
-        
-        // Заполняем нулями слева, чтобы достичь нужной длины
+
         for (int index = 0; index < length; index++) {
             int remainder = (int) (currentValue % BASE);
             builder.append(ALPHABET.charAt(remainder));
             currentValue /= BASE;
         }
-        
-        // Разворачиваем строку, так как остатки мы собирали с конца
+
         return builder.reverse().toString();
     }
 }
