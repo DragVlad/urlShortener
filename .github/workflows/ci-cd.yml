@@ -25,7 +25,7 @@ env:
 jobs:
   lint:
     name: Lint & Static Analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     defaults:
       run:
         working-directory: ${{ env.PROJECT_DIR }}
@@ -50,7 +50,8 @@ jobs:
 
   build-and-test:
     name: Build & Test (Maven)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
+    needs: lint
     defaults:
       run:
         working-directory: ${{ env.PROJECT_DIR }}
@@ -71,4 +72,4 @@ jobs:
         run: mvn -B -ntp compile
 
       - name: Run tests
-        run: mvn -B -ntp --no-transfer-progress clean test
+        run: mvn clean test
