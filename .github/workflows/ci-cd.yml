@@ -14,14 +14,40 @@ concurrency:
 permissions:
   contents: read
   packages: write
+  security-events: write
 
 env:
   JAVA_VERSION: '21'
   REGISTRY: ghcr.io
-  PROJECT_DIR: "app" 
+  PROJECT_DIR: "app"
   SMOKE_STRICT: "false"
 
 jobs:
+  lint:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.PROJECT_DIR }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+          cache-dependency-path: ${{ env.PROJECT_DIR }}/pom.xml
+
+      - name: Spotless (check only)
+        run: mvn -B -ntp spotless:check
+
+      - name: Checkstyle
+        run: mvn -B -ntp checkstyle:check
+
   build-and-test:
     name: Build & Test (Maven)
     runs-on: ubuntu-latest
@@ -42,7 +68,7 @@ jobs:
           cache-dependency-path: ${{ env.PROJECT_DIR }}/pom.xml
 
       - name: Build app
-        run: mvn compile
+        run: mvn -B -ntp compile
 
       - name: Run tests
-        run: mvn -B -ntp --no-transfer-progress clean verify
+        run: mvn -B -ntp --no-transfer-progress clean test
