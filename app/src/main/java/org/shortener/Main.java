@@ -15,25 +15,27 @@ import org.shortener.util.ShortCodeGenerator;
 import org.shortener.util.UrlValidator;
 
 public class Main {
-    public static void main(String[] args) {
-        AppConfig appConfig = AppConfig.load("application.properties");
+  public static void main(String[] args) {
+    AppConfig appConfig = AppConfig.load("application.properties");
 
-        UserDao userDao = new InMemoryUserDao();
-        ShortLinkDao shortLinkDao = new InMemoryShortLinkDao();
+    UserDao userDao = new InMemoryUserDao();
+    ShortLinkDao shortLinkDao = new InMemoryShortLinkDao();
 
-        ShortCodeGenerator codeGenerator = new ShortCodeGenerator(shortLinkDao::existsByCode,
-                appConfig.getCodeLength());
-        UrlValidator urlValidator = new UrlValidator();
-        BrowserOpener browserOpener = new BrowserOpener();
-        NotificationService notificationService = new NotificationService();
+    ShortCodeGenerator codeGenerator =
+        new ShortCodeGenerator(shortLinkDao::existsByCode, appConfig.getCodeLength());
+    UrlValidator urlValidator = new UrlValidator();
+    BrowserOpener browserOpener = new BrowserOpener();
+    NotificationService notificationService = new NotificationService();
 
-        UserService userService = new UserService(userDao);
-        LinkService linkService = new LinkService(shortLinkDao, userDao, codeGenerator, urlValidator, appConfig,
-                notificationService);
-        CommandParser commandParser = new CommandParser();
+    UserService userService = new UserService(userDao);
+    LinkService linkService =
+        new LinkService(
+            shortLinkDao, userDao, codeGenerator, urlValidator, appConfig, notificationService);
+    CommandParser commandParser = new CommandParser();
 
-        ConsoleApp consoleApp = new ConsoleApp(commandParser, linkService, userService, notificationService,
-                browserOpener, appConfig);
-        consoleApp.start();
-    }
+    ConsoleApp consoleApp =
+        new ConsoleApp(
+            commandParser, linkService, userService, notificationService, browserOpener, appConfig);
+    consoleApp.start();
+  }
 }
