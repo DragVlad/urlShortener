@@ -1,0 +1,48 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  JAVA_VERSION: '21'
+  REGISTRY: ghcr.io
+  PROJECT_DIR: "app" 
+  SMOKE_STRICT: "false"
+
+jobs:
+  build-and-test:
+    name: Build & Test (Maven)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.PROJECT_DIR }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'maven'
+          cache-dependency-path: ${{ env.PROJECT_DIR }}/pom.xml
+
+      - name: Build app
+        run: mvn compile
+
+      - name: Run tests
+        run: mvn -B -ntp --no-transfer-progress clean verify
