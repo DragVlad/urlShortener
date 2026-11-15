@@ -1,5 +1,11 @@
 package org.shortener.integration;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.shortener.config.AppConfig;
@@ -16,101 +22,99 @@ import org.shortener.service.UserService;
 import org.shortener.util.ShortCodeGenerator;
 import org.shortener.util.UrlValidator;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-
 class UrlShortenerIntegrationTest {
 
-    private UserService userService;
-    private LinkService linkService;
-    private ShortLinkDao shortLinkDao;
-    private UserDao userDao;
-    private AppConfig appConfig;
+  private UserService userService;
+  private LinkService linkService;
+  private ShortLinkDao shortLinkDao;
+  private UserDao userDao;
+  private AppConfig appConfig;
 
-    @BeforeEach
-    void setUp() {
-        appConfig = AppConfig.load("application.properties");
-        userDao = new InMemoryUserDao();
-        shortLinkDao = new InMemoryShortLinkDao();
-        userService = new UserService(userDao);
+  @BeforeEach
+  void setUp() {
+    appConfig = AppConfig.load("application.properties");
+    userDao = new InMemoryUserDao();
+    shortLinkDao = new InMemoryShortLinkDao();
+    userService = new UserService(userDao);
 
-        ShortCodeGenerator generator = new ShortCodeGenerator(shortLinkDao::existsByCode,
-                appConfig.getCodeLength());
-        linkService = new LinkService(shortLinkDao, userDao, generator,
-                new UrlValidator(), appConfig, new NotificationService());
-    }
+    ShortCodeGenerator generator =
+        new ShortCodeGenerator(shortLinkDao::existsByCode, appConfig.getCodeLength());
+    linkService =
+        new LinkService(
+            shortLinkDao,
+            userDao,
+            generator,
+            new UrlValidator(),
+            appConfig,
+            new NotificationService());
+  }
 
-    @Test
-    void fullFlowCreateOpenEditDelete() {
-        User user = userService.getOrCreateUser(null);
-        assertNotNull(user.getId());
+  @Test
+  void fullFlowCreateOpenEditDelete() {
+    User user = userService.getOrCreateUser(null);
+    assertNotNull(user.getId());
 
-        ShortLink created = linkService.createLink(user.getId(),
-                "https://example.com/very/long/path", 3).orElseThrow();
-        assertNotNull(created.getCode());
+    ShortLink created =
+        linkService.createLink(user.getId(), "https://example.com/very/long/path", 3).orElseThrow();
+    assertNotNull(created.getCode());
 
-        Optional<String> url = linkService.openLink(created.getCode());
-        assertTrue(url.isPresent());
-        assertEquals("https://example.com/very/long/path", url.get());
-        assertEquals(1, shortLinkDao.findByCode(created.getCode()).orElseThrow().getVisitCount());
+    Optional<String> url = linkService.openLink(created.getCode());
+    assertTrue(url.isPresent());
+    assertEquals("https://example.com/very/long/path", url.get());
+    assertEquals(1, shortLinkDao.findByCode(created.getCode()).orElseThrow().getVisitCount());
 
-        assertTrue(linkService.editLimit(user.getId(), created.getCode(), 10));
-        assertEquals(10, shortLinkDao.findByCode(created.getCode()).orElseThrow().getVisitLimit());
+    assertTrue(linkService.editLimit(user.getId(), created.getCode(), 10));
+    assertEquals(10, shortLinkDao.findByCode(created.getCode()).orElseThrow().getVisitLimit());
 
-        assertTrue(linkService.deleteLink(user.getId(), created.getCode()));
-        assertEquals(LinkStatus.DELETED,
-                shortLinkDao.findByCode(created.getCode()).orElseThrow().getStatus());
-        assertTrue(linkService.openLink(created.getCode()).isEmpty());
-    }
+    assertTrue(linkService.deleteLink(user.getId(), created.getCode()));
+    assertEquals(
+        LinkStatus.DELETED, shortLinkDao.findByCode(created.getCode()).orElseThrow().getStatus());
+    assertTrue(linkService.openLink(created.getCode()).isEmpty());
+  }
 
-    @Test
-    void twoUsersCannotEditEachOtherLinks() {
-        User u1 = userService.getOrCreateUser(null);
-        User u2 = userService.getOrCreateUser(null);
-        assertNotEquals(u1.getId(), u2.getId());
+  @Test
+  void twoUsersCannotEditEachOtherLinks() {
+    User u1 = userService.getOrCreateUser(null);
+    User u2 = userService.getOrCreateUser(null);
+    assertNotEquals(u1.getId(), u2.getId());
 
-        ShortLink link = linkService.createLink(u1.getId(), "https://a.example", 5)
-                .orElseThrow();
+    ShortLink link = linkService.createLink(u1.getId(), "https://a.example", 5).orElseThrow();
 
-        assertFalse(linkService.editLimit(u2.getId(), link.getCode(), 20));
-        assertFalse(linkService.deleteLink(u2.getId(), link.getCode()));
+    assertFalse(linkService.editLimit(u2.getId(), link.getCode(), 20));
+    assertFalse(linkService.deleteLink(u2.getId(), link.getCode()));
 
-        assertTrue(linkService.deleteLink(u1.getId(), link.getCode()));
-    }
+    assertTrue(linkService.deleteLink(u1.getId(), link.getCode()));
+  }
 
-    @Test
-    void limitReachedPreventsFurtherOpens() {
-        User user = userService.getOrCreateUser(null);
-        ShortLink link = linkService.createLink(user.getId(), "https://example.com", 2)
-                .orElseThrow();
+  @Test
+  void limitReachedPreventsFurtherOpens() {
+    User user = userService.getOrCreateUser(null);
+    ShortLink link = linkService.createLink(user.getId(), "https://example.com", 2).orElseThrow();
 
-        assertTrue(linkService.openLink(link.getCode()).isPresent());
-        assertTrue(linkService.openLink(link.getCode()).isPresent());
-        assertTrue(linkService.openLink(link.getCode()).isEmpty());
+    assertTrue(linkService.openLink(link.getCode()).isPresent());
+    assertTrue(linkService.openLink(link.getCode()).isPresent());
+    assertTrue(linkService.openLink(link.getCode()).isEmpty());
 
-        assertEquals(LinkStatus.LIMIT_REACHED,
-                shortLinkDao.findByCode(link.getCode()).orElseThrow().getStatus());
-    }
+    assertEquals(
+        LinkStatus.LIMIT_REACHED,
+        shortLinkDao.findByCode(link.getCode()).orElseThrow().getStatus());
+  }
 
-    @Test
-    void userLinkCodesStayInSyncWithService() {
-        User user = userService.getOrCreateUser(null);
-        ShortLink link = linkService.createLink(user.getId(), "https://example.com", 5)
-                .orElseThrow();
+  @Test
+  void userLinkCodesStayInSyncWithService() {
+    User user = userService.getOrCreateUser(null);
+    ShortLink link = linkService.createLink(user.getId(), "https://example.com", 5).orElseThrow();
 
-        assertTrue(userDao.findById(user.getId()).orElseThrow()
-                .getLinkCodes().contains(link.getCode()));
+    assertTrue(
+        userDao.findById(user.getId()).orElseThrow().getLinkCodes().contains(link.getCode()));
 
-        linkService.deleteLink(user.getId(), link.getCode());
-        assertFalse(userDao.findById(user.getId()).orElseThrow()
-                .getLinkCodes().contains(link.getCode()));
-    }
+    linkService.deleteLink(user.getId(), link.getCode());
+    assertFalse(
+        userDao.findById(user.getId()).orElseThrow().getLinkCodes().contains(link.getCode()));
+  }
 
-    @Test
-    void createLinkWithNonexistentOwnerFails() {
-        assertTrue(linkService.createLink(UUID.randomUUID(), "https://example.com", 5)
-                .isEmpty());
-    }
+  @Test
+  void createLinkWithNonexistentOwnerFails() {
+    assertTrue(linkService.createLink(UUID.randomUUID(), "https://example.com", 5).isEmpty());
+  }
 }
