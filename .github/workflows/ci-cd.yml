@@ -68,8 +68,12 @@ jobs:
           cache: 'maven'
           cache-dependency-path: ${{ env.PROJECT_DIR }}/pom.xml
 
-      - name: Build app
-        run: mvn -B -ntp compile
+      - name: Build & Test (verify)
+        run: mvn -B -ntp verify   # compile + test + package + integration-test
 
-      - name: Run tests
-        run: mvn clean test
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: ${{ env.PROJECT_DIR }}/target/*.jar
+          retention-days: 2
